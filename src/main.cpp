@@ -3,6 +3,7 @@
 #include <iostream>
 #include "events.hpp"
 #include "configuration.hpp"
+#include "background.cpp"
 #include <cmath>
 
 using Matrix4 = std::array<std::array<float, 4>, 4>;
@@ -21,7 +22,6 @@ sf::Vertex drawCurvePoint(sf::VertexArray points, float t) {
       float sum = 0;
       for(int k = 0; k < 4; k++) {
         sum = sum + (poly[k] * coeff[k][i]);
-        //std::cout << coeff[k][i] << std::endl;
       }
       t_basis[i] = sum;
     }
@@ -91,17 +91,20 @@ int main()
     while (window.isOpen())
     {
         processEvents(window, controlCircles, update);
-
-
         window.clear();
 
+        std::vector<sf::RectangleShape> blah = drawBack();
+        for(const auto& tiles : blah) {
+          window.draw(tiles);
+        }
         for(const auto& circle : controlCircles) {
           window.draw(circle);
         }
         window.draw(updateCurve(controlPoints, controlCircles, update));
 
+
+
         window.display();
     }
-
     return 0;
 }
