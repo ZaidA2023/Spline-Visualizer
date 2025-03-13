@@ -3,22 +3,52 @@
 #include <iostream>
 #include "events.hpp"
 #include "configuration.hpp"
+#include <cmath>
+
+using Matrix4 = std::array<std::array<float, 4>, 4>;
+const Matrix4 coeff = {{
+    {{ 1.f,  0.f,  0.f,  0.f}},
+    {{-3.f,  3.f,  0.f,  0.f}},
+    {{ 3.f, -6.f,  3.f,  0.f}},
+    {{-1.f,  3.f, -3.f,  1.f}}
+}};
 
 sf::Vertex drawCurvePoint(sf::VertexArray points, float t) {
-    if (points.getVertexCount() == 1) {
-        return points[0];
-    } else {
-        sf::VertexArray newpoints;
-        newpoints.setPrimitiveType(sf::Points);
-        newpoints.resize(points.getVertexCount() - 1);
-        for (std::size_t i = 0; i < newpoints.getVertexCount(); i++) {
-            newpoints[i].position.x = (1 - t) * points[i].position.x + t * points[i + 1].position.x;
-            newpoints[i].position.y = (1 - t) * points[i].position.y + t * points[i + 1].position.y;
-        }
-        return drawCurvePoint(newpoints, t);
+    std::array<float, 4> poly = {{1, t, t*t, t*t*t}};
+    std::array<float, 4> t_basis = {};
+
+    for(int i = 0; i < 4; i++) {
+      float sum = 0;
+      for(int k = 0; k < 4; k++) {
+        sum = sum + (poly[k] * coeff[k][i]);
+        //std::cout << coeff[k][i] << std::endl;
+      }
+      t_basis[i] = sum;
     }
+
+    float x = 0.f, y = 0.f;
+    for(int i = 0; i < 4; i++) {
+      x += t_basis[i] * points[i].position.x;
+      y += t_basis[i] * points[i].position.y;
+    }
+    return sf::Vertex(sf::Vector2f(x, y));
+
+    // De Casteljau's algorithm is too slow but leaving as reference
+    // if (points.getVertexCount() == 1) {
+    //     return points[0];
+    // } else {
+    //     sf::VertexArray newpoints;
+    //     newpoints.setPrimitiveType(sf::Points);
+    //     newpoints.resize(points.getVertexCount() - 1);
+    //     for (std::size_t i = 0; i < newpoints.getVertexCount(); i++) {
+    //         newpoints[i].position.x = (1 - t) * points[i].position.x + t * points[i + 1].position.x;
+    //         newpoints[i].position.y = (1 - t) * points[i].position.y + t * points[i + 1].position.y;
+    //     }
+    //     return drawCurvePoint(newpoints, t);
+    // }
 }
 
+ 
 sf::VertexArray updateCurve(sf::VertexArray& controlPoints, std::vector<sf::CircleShape>& controlCircles, bool& update) {
   sf::VertexArray bezierCurve(sf::LineStrip);
   for(int i = 0; i < controlCircles.size(); i++) {
@@ -56,7 +86,6 @@ int main()
         circle.setFillColor(sf::Color::Green);
         controlCircles.push_back(circle);
     }
-
 
     static bool update = false;
     while (window.isOpen())
