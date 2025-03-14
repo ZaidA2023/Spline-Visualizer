@@ -5,6 +5,7 @@
 #include "configuration.hpp"
 #include "background.cpp"
 #include <cmath>
+#include <ranges>
 
 using Matrix4 = std::array<std::array<float, 4>, 4>;
 const Matrix4 coeff = {{
@@ -15,37 +16,24 @@ const Matrix4 coeff = {{
 }};
 sf::VertexArray bezierCurve(sf::LineStrip);
 
-sf::Vertex drawCurvePoint(sf::VertexArray points, float t) {
-  // std::array<float, 4> poly = {{1, t, t*t, t*t*t}};
-  // std::array<float, 4> t_basis = {};
+sf::Vertex drawCurvePoint(sf::VertexArray points, float t, int offset) {
+  const std::array<float, 4> poly = {{1, t, t*t, t*t*t}};
+  std::array<float, 4> t_basis = {};
 
-  // for(int i = 0; i < 4; i++) {
-  //   float sum = 0;
-  //   for(int k = 0; k < 4; k++) {
-  //     sum = sum + (poly[k] * coeff[k][i]);
-  //   }
-  //   t_basis[i] = sum;
-  // }
-
-  // float x = 0.f, y = 0.f;
-  // for(int i = 0; i < 4; i++) {
-  //   x += t_basis[i] * points[i].position.x;
-  //   y += t_basis[i] * points[i].position.y;
-  // }
-  // return sf::Vertex(sf::Vector2f(x, y));
-
-  if (points.getVertexCount() == 1) {
-    return points[0];
-  } else {
-    sf::VertexArray newpoints;
-    newpoints.setPrimitiveType(sf::Points);
-    newpoints.resize(points.getVertexCount() - 1);
-    for (std::size_t i = 0; i < newpoints.getVertexCount(); i++) {
-        newpoints[i].position.x = (1 - t) * points[i].position.x + t * points[i + 1].position.x;
-        newpoints[i].position.y = (1 - t) * points[i].position.y + t * points[i + 1].position.y;
+  for(int i = 0; i < 4; i++) {
+    float sum = 0;
+    for(int k = 0; k < 4; k++) {
+      sum = sum + (poly[k] * coeff[k][i]);
     }
-    return drawCurvePoint(newpoints, t);
+    t_basis[i] = sum;
   }
+
+  float x = 0.f, y = 0.f;
+  for(int i = 0; i < 4; i++) {
+    x += t_basis[i] * points[i + offset].position.x;
+    y += t_basis[i] * points[i + offset].position.y;
+  }
+  return sf::Vertex(sf::Vector2f(x, y));
 }
 
  
@@ -60,11 +48,20 @@ sf::VertexArray updateCurve(sf::VertexArray& controlPoints, std::vector<sf::Circ
     controlPoints[i].position = controlCircles[i].getPosition();
   }
   const int sampleCount = 100;
+  auto it = controlCircles.begin();
   for (int i = 0; i <= sampleCount; ++i) {
-      float t = i / static_cast<float>(sampleCount);
-      sf::Vertex point = drawCurvePoint(controlPoints, t);
-      point.color = sf::Color::Yellow; 
-      bezierCurve.append(point);
+    float t = i / static_cast<float>(sampleCount);
+    sf::Vertex point = drawCurvePoint(controlPoints, t, 0);
+    point.color = sf::Color::Yellow; 
+    bezierCurve.append(point);
+  }
+  for (int k = 3; k < controlCircles.size() - 1; k+=3) {
+    for (int i = 0; i <= sampleCount; ++i) {
+        float t = i / static_cast<float>(sampleCount);
+        sf::Vertex point = drawCurvePoint(controlPoints, t, k);
+        point.color = sf::Color::Yellow; 
+        bezierCurve.append(point);
+    }
   }
   update = false;
   return bezierCurve;
@@ -90,13 +87,14 @@ int main()
         circle.setOrigin(conf::radius, conf::radius);
         circle.setPosition(controlPoints[i].position);
         circle.setFillColor(sf::Color::Green);
+        if(i == 1 || i == 2) circle.setFillColor(sf::Color::Red);
         controlCircles.push_back(circle);
     }
 
     const int sampleCount = 10000;
     for (int i = 0; i <= sampleCount; ++i) {
       float t = i / static_cast<float>(sampleCount);
-      sf::Vertex point = drawCurvePoint(controlPoints, t);
+      sf::Vertex point = drawCurvePoint(controlPoints, t, 0);
       point.color = sf::Color::Yellow; 
       bezierCurve.append(point);
     }
