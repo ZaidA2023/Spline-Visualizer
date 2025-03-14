@@ -6,6 +6,7 @@
 void processEvents(sf::Window& window, std::vector<sf::CircleShape>& controlCircles, bool& update)
 {
     static bool isDragging = false;
+    bool clicked = false;
     static std::size_t selectedCircleIndex = -1;
     for (auto event = sf::Event{}; window.pollEvent(event);)
     {
@@ -33,6 +34,18 @@ void processEvents(sf::Window& window, std::vector<sf::CircleShape>& controlCirc
                             break;
                         }
                     }
+                  if(mousePos.x > 10 && mousePos.x < 35 &&
+                     mousePos.y > 10 && mousePos.y < 35 && !clicked) 
+                     {
+                        //Generate new Control Point
+                        sf::CircleShape circle(conf::radius);
+                        circle.setOrigin(conf::radius, conf::radius);
+                        circle.setPosition(conf::window_size.x / 2, conf::window_size.y / 2);
+                        circle.setFillColor(sf::Color::Green);
+                        controlCircles.push_back(circle);
+                        clicked = true;
+                        update = true;
+                     }
                 }
             } else if (event.type == sf::Event::MouseButtonReleased) {
                 if (event.mouseButton.button == sf::Mouse::Left) {
@@ -40,10 +53,12 @@ void processEvents(sf::Window& window, std::vector<sf::CircleShape>& controlCirc
                       update = true;
                     }
                     isDragging = false;
+                    clicked = false;
                     selectedCircleIndex = -1;
                 }
             } else if (event.type == sf::Event::MouseMoved) {
                 if (isDragging && selectedCircleIndex != -1) {
+                    update = true;
                     sf::Vector2f mousePos(event.mouseMove.x, event.mouseMove.y);
                     controlCircles[selectedCircleIndex].setPosition(mousePos);
                 }

@@ -13,48 +13,53 @@ const Matrix4 coeff = {{
     {{ 3.f, -6.f,  3.f,  0.f}},
     {{-1.f,  3.f, -3.f,  1.f}}
 }};
+sf::VertexArray bezierCurve(sf::LineStrip);
 
 sf::Vertex drawCurvePoint(sf::VertexArray points, float t) {
-    std::array<float, 4> poly = {{1, t, t*t, t*t*t}};
-    std::array<float, 4> t_basis = {};
+  // std::array<float, 4> poly = {{1, t, t*t, t*t*t}};
+  // std::array<float, 4> t_basis = {};
 
-    for(int i = 0; i < 4; i++) {
-      float sum = 0;
-      for(int k = 0; k < 4; k++) {
-        sum = sum + (poly[k] * coeff[k][i]);
-      }
-      t_basis[i] = sum;
+  // for(int i = 0; i < 4; i++) {
+  //   float sum = 0;
+  //   for(int k = 0; k < 4; k++) {
+  //     sum = sum + (poly[k] * coeff[k][i]);
+  //   }
+  //   t_basis[i] = sum;
+  // }
+
+  // float x = 0.f, y = 0.f;
+  // for(int i = 0; i < 4; i++) {
+  //   x += t_basis[i] * points[i].position.x;
+  //   y += t_basis[i] * points[i].position.y;
+  // }
+  // return sf::Vertex(sf::Vector2f(x, y));
+
+  if (points.getVertexCount() == 1) {
+    return points[0];
+  } else {
+    sf::VertexArray newpoints;
+    newpoints.setPrimitiveType(sf::Points);
+    newpoints.resize(points.getVertexCount() - 1);
+    for (std::size_t i = 0; i < newpoints.getVertexCount(); i++) {
+        newpoints[i].position.x = (1 - t) * points[i].position.x + t * points[i + 1].position.x;
+        newpoints[i].position.y = (1 - t) * points[i].position.y + t * points[i + 1].position.y;
     }
-
-    float x = 0.f, y = 0.f;
-    for(int i = 0; i < 4; i++) {
-      x += t_basis[i] * points[i].position.x;
-      y += t_basis[i] * points[i].position.y;
-    }
-    return sf::Vertex(sf::Vector2f(x, y));
-
-    // De Casteljau's algorithm is too slow but leaving as reference
-    // if (points.getVertexCount() == 1) {
-    //     return points[0];
-    // } else {
-    //     sf::VertexArray newpoints;
-    //     newpoints.setPrimitiveType(sf::Points);
-    //     newpoints.resize(points.getVertexCount() - 1);
-    //     for (std::size_t i = 0; i < newpoints.getVertexCount(); i++) {
-    //         newpoints[i].position.x = (1 - t) * points[i].position.x + t * points[i + 1].position.x;
-    //         newpoints[i].position.y = (1 - t) * points[i].position.y + t * points[i + 1].position.y;
-    //     }
-    //     return drawCurvePoint(newpoints, t);
-    // }
+    return drawCurvePoint(newpoints, t);
+  }
 }
 
  
 sf::VertexArray updateCurve(sf::VertexArray& controlPoints, std::vector<sf::CircleShape>& controlCircles, bool& update) {
-  sf::VertexArray bezierCurve(sf::LineStrip);
+  bezierCurve.clear();
+  controlPoints.resize(controlCircles.size());
+  for (std::size_t i = 0; i < controlCircles.size(); i++) {
+    controlPoints[i].position = controlCircles[i].getPosition();
+  }
+
   for(int i = 0; i < controlCircles.size(); i++) {
     controlPoints[i].position = controlCircles[i].getPosition();
   }
-  const int sampleCount = 10000;
+  const int sampleCount = 100;
   for (int i = 0; i <= sampleCount; ++i) {
       float t = i / static_cast<float>(sampleCount);
       sf::Vertex point = drawCurvePoint(controlPoints, t);
@@ -78,6 +83,7 @@ int main()
     controlPoints[2].position = (sf::Vector2f(600.f, 100.f)); 
     controlPoints[3].position = (sf::Vector2f(700.f, 500.f)); // End
 
+    //Circles representing the control points
     std::vector<sf::CircleShape> controlCircles;
     for (int i = 0; i < controlPoints.getVertexCount(); i++) {
         sf::CircleShape circle(conf::radius);
@@ -87,21 +93,46 @@ int main()
         controlCircles.push_back(circle);
     }
 
+    const int sampleCount = 10000;
+    for (int i = 0; i <= sampleCount; ++i) {
+      float t = i / static_cast<float>(sampleCount);
+      sf::Vertex point = drawCurvePoint(controlPoints, t);
+      point.color = sf::Color::Yellow; 
+      bezierCurve.append(point);
+    }
+
+    //Performance boolean :D
     static bool update = false;
+
+    //Button to add more control points
+    sf::Texture texture;
+    texture.loadFromFile("../src/plus.jpg");
+    sf::Sprite sprite;
+    sprite.setTexture(texture);
+    sf::Vector2u texSize = texture.getSize();
+    float scaleX = 25 / static_cast<float>(texSize.x);
+    float scaleY = 25 / static_cast<float>(texSize.y);
+    sprite.setScale(scaleX, scaleY);
+    sprite.setPosition(10, 10);
+
     while (window.isOpen())
     {
         processEvents(window, controlCircles, update);
         window.clear();
-
         std::vector<sf::RectangleShape> blah = drawBack();
         for(const auto& tiles : blah) {
           window.draw(tiles);
         }
+
+
+        window.draw(sprite);
         for(const auto& circle : controlCircles) {
           window.draw(circle);
         }
-        window.draw(updateCurve(controlPoints, controlCircles, update));
-
+        if(update == true) {
+          updateCurve(controlPoints, controlCircles, update);
+        }
+        window.draw(bezierCurve);
 
 
         window.display();
