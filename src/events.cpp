@@ -40,9 +40,10 @@ void processEvents(sf::Window& window, std::vector<sf::CircleShape>& controlCirc
                         //Generate new Control Point
                         sf::CircleShape circle(conf::radius);
                         circle.setOrigin(conf::radius, conf::radius);
-                        circle.setPosition(conf::window_size.x / 2, conf::window_size.y / 2);
+                        auto it = controlCircles.end() - 1;
+                        circle.setPosition(it->getPosition().x - 10, it->getPosition().y - 10);
                         circle.setFillColor(sf::Color::Green);
-                        controlCircles.push_back(circle);
+                        controlCircles.insert(it, circle);
                         clicked = true;
                         update = true;
                      }
