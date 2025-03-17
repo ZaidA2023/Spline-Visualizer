@@ -10,7 +10,7 @@ To run via terminal (in root dir):
 This project is base code for a 3D visualization tool for higher  
 order bspline meshes currently only supporting cubic  
 Future plans:  
-Quartic and quantic
+Quartic and quantic  
 More spline types e.g hermite  
 Coordinate inputs and clear plane with units  
 Sample size slider
