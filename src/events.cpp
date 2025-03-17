@@ -21,7 +21,6 @@ void processEvents(sf::Window& window, std::vector<sf::CircleShape>& controlCirc
           window.close();
       }
 
-
   } else if (event.type == sf::Event::MouseButtonPressed) {
     sf::Vector2f mousePos(event.mouseButton.x, event.mouseButton.y);
     if (event.mouseButton.button == sf::Mouse::Left) {
@@ -37,7 +36,7 @@ void processEvents(sf::Window& window, std::vector<sf::CircleShape>& controlCirc
             }
         }
         
-      if(mousePos.x > 10 && mousePos.x < 35 &&
+      if(mousePos.x > 50 && mousePos.x < 75 &&
           mousePos.y > 10 && mousePos.y < 35 && !clicked) 
         {
           if(statey == state::BSPLINE) {
@@ -53,14 +52,30 @@ void processEvents(sf::Window& window, std::vector<sf::CircleShape>& controlCirc
             for(int i = 0; i < 3; i++) {
               sf::CircleShape circle(conf::radius);
               circle.setOrigin(conf::radius, conf::radius);
-              circle.setPosition((13*50), (5*50));
-              circle.setFillColor(sf::Color::Green);
-              if(i == 0 || i == 1) circle.setFillColor(sf::Color::Red);
-              controlCircles.insert(controlCircles.end() - 1, circle);
+              circle.setPosition((13*50) + i*50, (5*50));
+              circle.setFillColor(sf::Color::Blue);
+              if(i == 0 || i == 1) circle.setFillColor(sf::Color::Green);
+              controlCircles.push_back(circle);
               clicked = true;
               update = true;
             }
           }
+        }
+        if(mousePos.x > 20 && mousePos.x < 45 && mousePos.y > 10 && mousePos.y < 35) {
+          statey = state::TITLE;
+        }
+        if(mousePos.x > 80 && mousePos.x < 105 && mousePos.y > 10 && mousePos.y < 35) {
+          std::vector<sf::CircleShape> newCircles;
+          for (int i = 0; i < 3; i++) {
+            newCircles.push_back(controlCircles[i]);
+          }
+          newCircles.push_back(controlCircles[controlCircles.size()-1]);
+          newCircles[0].setPosition(conf::p1);  
+          newCircles[1].setPosition(conf::p2);  
+          newCircles[2].setPosition(conf::p3); 
+          newCircles[3].setPosition(conf::p4); 
+          controlCircles = newCircles;
+          update = true;
         }
       } else {
         //Title screen click
@@ -69,9 +84,11 @@ void processEvents(sf::Window& window, std::vector<sf::CircleShape>& controlCirc
           mousePos.x < 652+99 && mousePos.x > 652-5 && mousePos.y < 484.5f+36 && mousePos.y > 484.5f-5) 
         {
           statey = state::BEZIER;
+          update = true;
         } else if (statey == state::TITLE && 
           mousePos.x < 772+124 && mousePos.x > 772-5 && mousePos.y < 483.5f+44 && mousePos.y > 483.5f-5) {
-            statey = state::BSPLINE;
+          statey = state::BSPLINE;
+          update = true;
         }
       }
     }
@@ -97,10 +114,18 @@ void processEvents(sf::Window& window, std::vector<sf::CircleShape>& controlCirc
         controlCircles[selectedCircleIndex].setPosition(mousePos);
     } 
     sf::Vector2f middle(conf::window_size.x / 2, conf::window_size.y / 2);
-    if(statey == state::TITLE && 
+
+    if(statey == state::TITLE &&
        mousePos.x < 652+99 && mousePos.x > 652-5 && mousePos.y < 484.5f+36 && mousePos.y > 484.5f-5 ||
        mousePos.x < 772+124 && mousePos.x > 772-5 && mousePos.y < 483.5f+44 && mousePos.y > 483.5f-5) 
     {
+      sf::Cursor cursor;
+      if (cursor.loadFromSystem(sf::Cursor::Hand))
+      {
+        window.setMouseCursor(cursor);
+      }
+
+    } else if(mousePos.x > 10 && mousePos.x < 105 && mousePos.y > 10 && mousePos.y < 35 ) {
       sf::Cursor cursor;
       if (cursor.loadFromSystem(sf::Cursor::Hand))
       {
@@ -113,6 +138,7 @@ void processEvents(sf::Window& window, std::vector<sf::CircleShape>& controlCirc
         window.setMouseCursor(cursor);
       }
     }
+
   }
   }
 }

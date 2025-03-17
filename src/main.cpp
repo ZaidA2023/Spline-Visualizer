@@ -108,10 +108,10 @@ int main()
     window.setFramerateLimit(conf::max_framerate);
 
     sf::VertexArray controlPoints(sf::Points, 4);
-    controlPoints[0].position = (sf::Vector2f(100.f, 500.f));   // Start point
-    controlPoints[1].position = (sf::Vector2f(200.f, 100.f));   // Control point 1   
-    controlPoints[2].position = (sf::Vector2f(600.f, 100.f)); 
-    controlPoints[3].position = (sf::Vector2f(700.f, 500.f)); // End
+    controlPoints[0].position = (conf::p1);   // Start point
+    controlPoints[1].position = (conf::p2);   // Control point 1   
+    controlPoints[2].position = (conf::p3); 
+    controlPoints[3].position = (conf::p4); // End
 
     //Circles representing the control points
     std::vector<sf::CircleShape> controlCircles;
@@ -136,15 +136,37 @@ int main()
     static bool update = false;
 
     //Button to add more control points
-    sf::Texture texture;
-    texture.loadFromFile("../src/plus.jpg");
-    sf::Sprite sprite;
-    sprite.setTexture(texture);
-    sf::Vector2u texSize = texture.getSize();
+    sf::Texture add_texture;
+    add_texture.loadFromFile("../src/plus.jpg");
+    sf::Sprite add_sprite;
+    add_sprite.setTexture(add_texture);
+    sf::Vector2u texSize = add_texture.getSize();
     float scaleX = 25 / static_cast<float>(texSize.x);
     float scaleY = 25 / static_cast<float>(texSize.y);
-    sprite.setScale(scaleX, scaleY);
-    sprite.setPosition(10, 10);
+    add_sprite.setScale(scaleX, scaleY);
+    add_sprite.setPosition(50, 10);
+
+    //Button to go back
+    sf::Texture back_texture;
+    back_texture.loadFromFile("../src/back.png");
+    sf::Sprite back_arrow;
+    back_arrow.setTexture(back_texture);
+    texSize = back_texture.getSize();
+    scaleX = 25 / static_cast<float>(texSize.x);
+    scaleY = 25 / static_cast<float>(texSize.y);
+    back_arrow.setScale(scaleX, scaleY);
+    back_arrow.setPosition(20, 10);
+
+    //Button to reset UI
+    sf::Texture reset_texture;
+    reset_texture.loadFromFile("../src/reset.png");
+    sf::Sprite reset_sprite;
+    reset_sprite.setTexture(reset_texture);
+    texSize = reset_texture.getSize();
+    scaleX = 25 / static_cast<float>(texSize.x);
+    scaleY = 25 / static_cast<float>(texSize.y);
+    reset_sprite.setScale(scaleX, scaleY);
+    reset_sprite.setPosition(80, 10);
 
     sf::Font font;
     font.loadFromFile("../src/open-sans/OpenSans-Regular.ttf");
@@ -163,12 +185,14 @@ int main()
         for(const auto& tiles : blah) {
           window.draw(tiles);
         }
-        window.draw(sprite);
+        window.draw(back_arrow);
+        window.draw(add_sprite);
+        window.draw(reset_sprite);
         for(const auto& circle : controlCircles) {
           window.draw(circle);
         }
         if(update == true) {
-          if(statey == state::BSPLINE) updateBspline(controlPoints, controlCircles, update);
+          if (statey == state::BSPLINE) updateBspline(controlPoints, controlCircles, update);
           if (statey == state::BEZIER) updateBezier(controlPoints, controlCircles, update);
         }
         window.draw(bezierCurve);
