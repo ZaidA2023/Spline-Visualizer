@@ -3,7 +3,7 @@
 #include "configuration.hpp"
 #include <SFML/Window.hpp>
 
-void processEvents(sf::Window& window, std::vector<sf::CircleShape>& controlCircles, bool& update)
+void processEvents(sf::Window& window, std::vector<sf::CircleShape>& controlCircles, bool& update, int& statey)
 {
   static bool isDragging = false;
   bool clicked = false;
@@ -23,48 +23,96 @@ void processEvents(sf::Window& window, std::vector<sf::CircleShape>& controlCirc
 
 
   } else if (event.type == sf::Event::MouseButtonPressed) {
-          if (event.mouseButton.button == sf::Mouse::Left) {
-              sf::Vector2f mousePos(event.mouseButton.x, event.mouseButton.y);
-              for (std::size_t i = 0; i < controlCircles.size(); ++i) {
-                  float distance = std::hypot(mousePos.x - controlCircles[i].getPosition().x,
-                                              mousePos.y - controlCircles[i].getPosition().y);
-                  if (distance <= conf::radius) {
-                      isDragging = true;
-                      selectedCircleIndex = i;
-                      break;
-                  }
-              }
-            if(mousePos.x > 10 && mousePos.x < 35 &&
-                mousePos.y > 10 && mousePos.y < 35 && !clicked) 
-              {
-                //Generate new Main and Control Points
-                for(int i = 0; i < 3; i++) {
-                  sf::CircleShape circle(conf::radius);
-                  circle.setOrigin(conf::radius, conf::radius);
-                  circle.setPosition((13*50) + i*50, (5*50));
-                  circle.setFillColor(sf::Color::Green);
-                  if(i == 0 || i == 1) circle.setFillColor(sf::Color::Red);
-                  controlCircles.push_back(circle);
-                  clicked = true;
-                  update = true;
-                }
-              }
-          }
-      } else if (event.type == sf::Event::MouseButtonReleased) {
-          if (event.mouseButton.button == sf::Mouse::Left) {
-              if(isDragging == true) {
-                update = true;
-              }
-              isDragging = false;
-              clicked = false;
-              selectedCircleIndex = -1;
-          }
-      } else if (event.type == sf::Event::MouseMoved) {
-          if (isDragging && selectedCircleIndex != -1) {
+    sf::Vector2f mousePos(event.mouseButton.x, event.mouseButton.y);
+    if (event.mouseButton.button == sf::Mouse::Left) {
+      if(statey != state::TITLE) {
+        //Not a title screen click
+        for (std::size_t i = 0; i < controlCircles.size(); ++i) {
+            float distance = std::hypot(mousePos.x - controlCircles[i].getPosition().x,
+                                        mousePos.y - controlCircles[i].getPosition().y);
+            if (distance <= conf::radius) {
+                isDragging = true;
+                selectedCircleIndex = i;
+                break;
+            }
+        }
+        
+      if(mousePos.x > 10 && mousePos.x < 35 &&
+          mousePos.y > 10 && mousePos.y < 35 && !clicked) 
+        {
+          if(statey == state::BSPLINE) {
+          //Generate new Main and Control Points
+            sf::CircleShape circle(conf::radius);
+            circle.setOrigin(conf::radius, conf::radius);
+            circle.setPosition((13*50), (5*50));
+            circle.setFillColor(sf::Color::Green);
+            controlCircles.insert(controlCircles.end() - 1, circle);
+            clicked = true;
+            update = true;
+          } else if(statey == state::BEZIER) {
+            for(int i = 0; i < 3; i++) {
+              sf::CircleShape circle(conf::radius);
+              circle.setOrigin(conf::radius, conf::radius);
+              circle.setPosition((13*50), (5*50));
+              circle.setFillColor(sf::Color::Green);
+              if(i == 0 || i == 1) circle.setFillColor(sf::Color::Red);
+              controlCircles.insert(controlCircles.end() - 1, circle);
+              clicked = true;
               update = true;
-              sf::Vector2f mousePos(event.mouseMove.x, event.mouseMove.y);
-              controlCircles[selectedCircleIndex].setPosition(mousePos);
+            }
           }
+        }
+      } else {
+        //Title screen click
+        sf::Vector2f middle(conf::window_size.x / 2, conf::window_size.y / 2);
+        if(statey == state::TITLE && 
+          mousePos.x < 652+99 && mousePos.x > 652-5 && mousePos.y < 484.5f+36 && mousePos.y > 484.5f-5) 
+        {
+          statey = state::BEZIER;
+        } else if (statey == state::TITLE && 
+          mousePos.x < 772+124 && mousePos.x > 772-5 && mousePos.y < 483.5f+44 && mousePos.y > 483.5f-5) {
+            statey = state::BSPLINE;
+        }
       }
+    }
+
+
+
+  } else if (event.type == sf::Event::MouseButtonReleased) {
+    if (event.mouseButton.button == sf::Mouse::Left) {
+        if(isDragging == true) {
+          update = true;
+        }
+        isDragging = false;
+        clicked = false;
+        selectedCircleIndex = -1;
+    }
+
+
+
+  } else if (event.type == sf::Event::MouseMoved) {
+    sf::Vector2f mousePos(event.mouseMove.x, event.mouseMove.y);
+    if (isDragging && selectedCircleIndex != -1) {
+        update = true;
+        controlCircles[selectedCircleIndex].setPosition(mousePos);
+    } 
+    sf::Vector2f middle(conf::window_size.x / 2, conf::window_size.y / 2);
+    if(statey == state::TITLE && 
+       mousePos.x < 652+99 && mousePos.x > 652-5 && mousePos.y < 484.5f+36 && mousePos.y > 484.5f-5 ||
+       mousePos.x < 772+124 && mousePos.x > 772-5 && mousePos.y < 483.5f+44 && mousePos.y > 483.5f-5) 
+    {
+      sf::Cursor cursor;
+      if (cursor.loadFromSystem(sf::Cursor::Hand))
+      {
+        window.setMouseCursor(cursor);
+      }
+    } else {
+      sf::Cursor cursor;
+      if (cursor.loadFromSystem(sf::Cursor::Arrow))
+      {
+        window.setMouseCursor(cursor);
+      }
+    }
+  }
   }
 }

@@ -1,4 +1,3 @@
-#include "background.hpp"
 #include <SFML/Graphics.hpp>
 #include "configuration.hpp"
 #include <vector>

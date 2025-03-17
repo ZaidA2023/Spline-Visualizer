@@ -3,14 +3,24 @@
 #include <iostream>
 #include "events.hpp"
 #include "configuration.hpp"
-#include "background.cpp"
+#//include "background.cpp"
 #include <cmath>
 #include <ranges>
+#include "title.cpp"
+
+
+int statey = state::TITLE;
 
 using Matrix4 = std::array<std::array<float, 4>, 4>;
-const Matrix4 coeff = {{
+const Matrix4 bezier_coeff = {{
     {{ 1.f,  0.f,  0.f,  0.f}},
     {{-3.f,  3.f,  0.f,  0.f}},
+    {{ 3.f, -6.f,  3.f,  0.f}},
+    {{-1.f,  3.f, -3.f,  1.f}}
+}};
+const Matrix4 bspline_coeff = {{
+    {{ 1.f,  4.f,  1.f,  0.f}},
+    {{-3.f,  0.f,  3.f,  0.f}},
     {{ 3.f, -6.f,  3.f,  0.f}},
     {{-1.f,  3.f, -3.f,  1.f}}
 }};
@@ -23,7 +33,8 @@ sf::Vertex drawCurvePoint(sf::VertexArray points, float t, int offset) {
   for(int i = 0; i < 4; i++) {
     float sum = 0;
     for(int k = 0; k < 4; k++) {
-      sum = sum + (poly[k] * coeff[k][i]);
+      if(statey == state::BSPLINE) sum = sum + (poly[k] * (bspline_coeff[k][i]/6.f));
+      if(statey == state::BEZIER) sum = sum + (poly[k] * (bezier_coeff[k][i]));
     }
     t_basis[i] = sum;
   }
@@ -36,8 +47,7 @@ sf::Vertex drawCurvePoint(sf::VertexArray points, float t, int offset) {
   return sf::Vertex(sf::Vector2f(x, y));
 }
 
- 
-sf::VertexArray updateCurve(sf::VertexArray& controlPoints, std::vector<sf::CircleShape>& controlCircles, bool& update) {
+sf::VertexArray updateBezier(sf::VertexArray& controlPoints, std::vector<sf::CircleShape>& controlCircles, bool& update) {
   bezierCurve.clear();
   controlPoints.resize(controlCircles.size());
   for (std::size_t i = 0; i < controlCircles.size(); i++) {
@@ -67,11 +77,34 @@ sf::VertexArray updateCurve(sf::VertexArray& controlPoints, std::vector<sf::Circ
   return bezierCurve;
 }
 
+sf::VertexArray updateBspline(sf::VertexArray& controlPoints, std::vector<sf::CircleShape>& controlCircles, bool& update) {
+  bezierCurve.clear();
+  controlPoints.resize(controlCircles.size());
+  for (std::size_t i = 0; i < controlCircles.size(); i++) {
+    controlPoints[i].position = controlCircles[i].getPosition();
+  }
+
+  for(int i = 0; i < controlCircles.size(); i++) {
+    controlPoints[i].position = controlCircles[i].getPosition();
+  }
+  const int sampleCount = 100;
+  for (int k = 0; k < controlCircles.size() - 3; k++) {
+    for (int i = 0; i <= sampleCount; ++i) {
+        float t = i / static_cast<float>(sampleCount );
+        sf::Vertex point = drawCurvePoint(controlPoints, t, k);
+        point.color = sf::Color::Yellow; 
+        bezierCurve.append(point);
+    }
+  }
+  update = false;
+  return bezierCurve;
+}
+
 int main()
 {
     sf::ContextSettings settings;
     settings.antialiasingLevel = 8; 
-    auto window = sf::RenderWindow{ {conf::window_size.x, conf::window_size.y}, "Bezier Curve", sf::Style::Default, settings};
+    auto window = sf::RenderWindow{ {conf::window_size.x, conf::window_size.y}, "Bezier Curve", sf::Style::Fullscreen, settings};
     window.setFramerateLimit(conf::max_framerate);
 
     sf::VertexArray controlPoints(sf::Points, 4);
@@ -87,7 +120,7 @@ int main()
         circle.setOrigin(conf::radius, conf::radius);
         circle.setPosition(controlPoints[i].position);
         circle.setFillColor(sf::Color::Green);
-        if(i == 1 || i == 2) circle.setFillColor(sf::Color::Red);
+        if(i == 0 || i == 3) circle.setFillColor(sf::Color::Blue);
         controlCircles.push_back(circle);
     }
 
@@ -113,27 +146,34 @@ int main()
     sprite.setScale(scaleX, scaleY);
     sprite.setPosition(10, 10);
 
+    sf::Font font;
+    font.loadFromFile("../src/open-sans/OpenSans-Regular.ttf");
+    sf::Text text("Bezier", font);
+
+    std::vector<sf::RectangleShape> blah = drawBack();
+
     while (window.isOpen())
     {
-        processEvents(window, controlCircles, update);
-        window.clear();
-        std::vector<sf::RectangleShape> blah = drawBack();
+      processEvents(window, controlCircles, update, statey);
+      window.clear();
+      if(statey == state::TITLE) {
+        // draw title and then skip everything else
+        drawTitle(&window);
+      } else {
         for(const auto& tiles : blah) {
           window.draw(tiles);
         }
-
-
         window.draw(sprite);
         for(const auto& circle : controlCircles) {
           window.draw(circle);
         }
         if(update == true) {
-          updateCurve(controlPoints, controlCircles, update);
+          if(statey == state::BSPLINE) updateBspline(controlPoints, controlCircles, update);
+          if (statey == state::BEZIER) updateBezier(controlPoints, controlCircles, update);
         }
         window.draw(bezierCurve);
-
-
-        window.display();
+      }
+      window.display();
     }
     return 0;
 }
