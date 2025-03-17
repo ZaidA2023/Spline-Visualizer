@@ -3,10 +3,10 @@
 #include <iostream>
 #include "events.hpp"
 #include "configuration.hpp"
-#//include "background.cpp"
+#include "background.hpp"
 #include <cmath>
 #include <ranges>
-#include "title.cpp"
+#include "title.hpp"
 
 
 int statey = state::TITLE;

@@ -2,7 +2,7 @@
 #include "configuration.hpp"
 #include <vector>
 #include <SFML/Window.hpp>
-#include "background.cpp"
+#include "background.hpp"
 #include <stdio.h>
 
 
