@@ -13,8 +13,8 @@ std::vector<sf::RectangleShape> drawBack() {
       sf::RectangleShape rectangle({conf::tileSize, conf::tileSize});
       rectangle.setOrigin(conf::tileSize/2, conf::tileSize/2);
       rectangle.setPosition((i * conf::tileSize) + (conf::tileSize/2) , (k * conf::tileSize) + (conf::tileSize/2));
-      rectangle.setFillColor(sf::Color::Black);
-      rectangle.setOutlineColor(sf::Color::White);
+      rectangle.setFillColor(sf::Color::White);
+      rectangle.setOutlineColor(sf::Color::Black);
       rectangle.setOutlineThickness(1.f);
       grid.push_back(rectangle);
     }

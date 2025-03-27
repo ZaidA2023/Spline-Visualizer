@@ -62,14 +62,14 @@ sf::VertexArray updateBezier(sf::VertexArray& controlPoints, std::vector<sf::Cir
   for (int i = 0; i <= sampleCount; ++i) {
     float t = i / static_cast<float>(sampleCount);
     sf::Vertex point = drawCurvePoint(controlPoints, t, 0);
-    point.color = sf::Color::Yellow; 
+    point.color = sf::Color::Red; 
     bezierCurve.append(point);
   }
   for (int k = 3; k < controlCircles.size() - 1; k+=3) {
     for (int i = 0; i <= sampleCount; ++i) {
         float t = i / static_cast<float>(sampleCount);
         sf::Vertex point = drawCurvePoint(controlPoints, t, k);
-        point.color = sf::Color::Yellow; 
+        point.color = sf::Color::Red; 
         bezierCurve.append(point);
     }
   }
@@ -92,7 +92,7 @@ sf::VertexArray updateBspline(sf::VertexArray& controlPoints, std::vector<sf::Ci
     for (int i = 0; i <= sampleCount; ++i) {
         float t = i / static_cast<float>(sampleCount );
         sf::Vertex point = drawCurvePoint(controlPoints, t, k);
-        point.color = sf::Color::Yellow; 
+        point.color = sf::Color::Red; 
         bezierCurve.append(point);
     }
   }
@@ -128,7 +128,7 @@ int main()
     for (int i = 0; i <= sampleCount; ++i) {
       float t = i / static_cast<float>(sampleCount);
       sf::Vertex point = drawCurvePoint(controlPoints, t, 0);
-      point.color = sf::Color::Yellow; 
+      point.color = sf::Color::Red; 
       bezierCurve.append(point);
     }
 
